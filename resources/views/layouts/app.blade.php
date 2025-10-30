@@ -35,23 +35,12 @@
                     <span class="text-gray-700 dark:text-gray-300">Hello, {{ auth()->user()->username ?? auth()->user()->name ?? 'User' }}!</span>                    <!-- Dark Mode Toggle -->
                     <button 
                         onclick="toggleDarkMode()"
-                        class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        class="px-3 py-1 rounded bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors text-sm font-medium text-gray-900 dark:text-white"
                         title="Toggle dark mode"
                         id="theme-toggle"
-                    >                        <svg id="theme-icon-sun" class="w-5 h-5 text-amber-500 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                        </svg>
-                        <svg id="theme-icon-moon" class="w-5 h-5 text-gray-600 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                        </svg>
+                    >
+                        <span class="light-mode">Dark</span>
+                        <span class="dark-mode hidden">Light</span>
                     </button>
 
                     <form method="POST" action="{{ route('logout') }}" class="inline">
@@ -70,21 +59,41 @@
         <div class="px-4 py-6 sm:px-0">
             @yield('content')
         </div>
-    </div>
-
-    <script>
+    </div>    <script>
         function toggleDarkMode() {
             const html = document.documentElement;
             const isDark = html.classList.contains('dark');
+            const lightMode = document.querySelector('.light-mode');
+            const darkMode = document.querySelector('.dark-mode');
             
             if (isDark) {
                 html.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
+                if (lightMode) lightMode.classList.remove('hidden');
+                if (darkMode) darkMode.classList.add('hidden');
             } else {
                 html.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
+                if (lightMode) lightMode.classList.add('hidden');
+                if (darkMode) darkMode.classList.remove('hidden');
             }
         }
+        
+        // Initialize button text on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            const lightMode = document.querySelector('.light-mode');
+            const darkMode = document.querySelector('.dark-mode');
+            
+            if (isDark) {
+                if (lightMode) lightMode.classList.add('hidden');
+                if (darkMode) darkMode.classList.remove('hidden');
+            } else {
+                if (lightMode) lightMode.classList.remove('hidden');
+                if (darkMode) darkMode.classList.add('hidden');
+            }
+        });
     </script>
 
     @yield('scripts')

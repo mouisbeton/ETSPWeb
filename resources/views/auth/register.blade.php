@@ -21,21 +21,14 @@
     <title>Register - TaskManager</title>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen flex items-center justify-center p-4 transition-colors">
-    <div class="w-full max-w-md">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Create Account</h2>
-                <button 
+    <div class="w-full max-w-md">        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Create Account</h2>                <button 
                     onclick="toggleDarkMode()"
-                    class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    class="px-3 py-1 rounded bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors text-sm font-medium text-gray-900 dark:text-white"
                     title="Toggle dark mode"
                 >
-                    <svg id="theme-icon-sun" class="w-5 h-5 text-yellow-500 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v2a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l-1.414-1.414a1 1 0 00-1.414 1.414l1.414 1.414a1 1 0 001.414-1.414zM2.05 6.464a1 1 0 00-1.414-1.414l-1.414 1.414a1 1 0 001.414 1.414l1.414-1.414z" clip-rule="evenodd" />
-                    </svg>
-                    <svg id="theme-icon-moon" class="w-5 h-5 text-gray-600 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                    </svg>
+                    <span class="light-mode">Dark</span>
+                    <span class="dark-mode hidden">Light</span>
                 </button>
             </div>
 
@@ -89,19 +82,40 @@
         </div>
     </div>
 
-    <script>
-        function toggleDarkMode() {
+    <script>        function toggleDarkMode() {
             const html = document.documentElement;
             const isDark = html.classList.contains('dark');
+            const lightMode = document.querySelector('.light-mode');
+            const darkMode = document.querySelector('.dark-mode');
             
             if (isDark) {
                 html.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
+                if (lightMode) lightMode.classList.remove('hidden');
+                if (darkMode) darkMode.classList.add('hidden');
             } else {
                 html.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
+                if (lightMode) lightMode.classList.add('hidden');
+                if (darkMode) darkMode.classList.remove('hidden');
             }
         }
+        
+        // Initialize button text on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            const lightMode = document.querySelector('.light-mode');
+            const darkMode = document.querySelector('.dark-mode');
+            
+            if (isDark) {
+                if (lightMode) lightMode.classList.add('hidden');
+                if (darkMode) darkMode.classList.remove('hidden');
+            } else {
+                if (lightMode) lightMode.classList.remove('hidden');
+                if (darkMode) darkMode.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html>
