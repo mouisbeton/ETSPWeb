@@ -52,5 +52,5 @@ RUN php artisan config:cache \
 # Expose port
 EXPOSE 8000
 
-# Start PHP server
-CMD php -S 0.0.0.0:8000 -t public
+# Start PHP server with Railway PORT support
+CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-8000} -t public"]
