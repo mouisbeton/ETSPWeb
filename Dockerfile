@@ -32,6 +32,9 @@ WORKDIR /app
 # Copy application files
 COPY . .
 
+# Make start script executable
+RUN chmod +x start.sh
+
 # Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
@@ -53,4 +56,4 @@ RUN php artisan config:cache \
 EXPOSE 8000
 
 # Start PHP server with Railway PORT support
-CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-8000} -t public"]
+CMD ["./start.sh"]
