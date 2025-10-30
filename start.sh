@@ -3,10 +3,18 @@ set -e
 
 echo "=== Starting Task Manager on Railway ==="
 
-# Copy environment file
+# Copy environment file and substitute variables
 echo "Setting up environment..."
 if [ -f .env.railway ]; then
     cp .env.railway .env
+    
+    # Substitute environment variables
+    sed -i "s|\${DATABASE_HOST}|${DATABASE_HOST}|g" .env
+    sed -i "s|\${DATABASE_PORT}|${DATABASE_PORT}|g" .env
+    sed -i "s|\${DATABASE_NAME}|${DATABASE_NAME}|g" .env
+    sed -i "s|\${DATABASE_USER}|${DATABASE_USER}|g" .env
+    sed -i "s|\${DATABASE_PASSWORD}|${DATABASE_PASSWORD}|g" .env
+    
     echo "✓ Environment configured"
 else
     echo "✗ .env.railway not found"
