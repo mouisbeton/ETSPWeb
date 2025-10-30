@@ -45,10 +45,9 @@ RUN npm run build
 RUN mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs \
     && chmod -R 777 storage bootstrap/cache
 
-# Cache Laravel config
+# Cache Laravel config (skip view:cache for now as it may fail in Docker)
 RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+    && php artisan route:cache
 
 # Expose port
 EXPOSE 8000
