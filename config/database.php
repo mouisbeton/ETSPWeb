@@ -58,9 +58,6 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => [
-                PDO::MYSQL_ATTR_SSL_MODE => PDO::MYSQL_SSL_MODE_DISABLED,
-            ],
         ],
 
         'mariadb' => [
@@ -78,9 +75,6 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => [
-                PDO::MYSQL_ATTR_SSL_MODE => PDO::MYSQL_SSL_MODE_DISABLED,
-            ],
         ],
 
         'pgsql' => [
