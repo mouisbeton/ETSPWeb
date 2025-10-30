@@ -26,18 +26,38 @@ if [ -f "$ENV_FILE" ]; then
     echo "DEBUG: Database credentials from .env.railway:"
     grep "^DB_" .env || true
     
-    # Parse DATABASE_URL if available (Railway provides this for MySQL)
+    # Parse DATABASE_URL if available (Heroku provides PostgreSQL, Railway provides MySQL)
     if [ ! -z "$DATABASE_URL" ]; then
         echo "DEBUG: Found DATABASE_URL, parsing..."
-        # DATABASE_URL format: mysql://user:password@host:port/database
-        # Extract components using regex
-        if [[ $DATABASE_URL =~ mysql://([^:]+):([^@]+)@([^:]+):([^/]+)/(.+)$ ]]; then
+        # Handle MySQL URL format: mysql://user:password@host:port/database
+        # Also handle mysql2:// format sometimes used by Railway
+        if [[ $DATABASE_URL =~ mysql2?://([^:]+):([^@]+)@([^:/?]+):?([0-9]*)/(.+) ]]; then
             DB_USER="${BASH_REMATCH[1]}"
             DB_PASS="${BASH_REMATCH[2]}"
             DB_HOST="${BASH_REMATCH[3]}"
-            DB_PORT="${BASH_REMATCH[4]}"
+            DB_PORT="${BASH_REMATCH[4]:-3306}"
             DB_NAME="${BASH_REMATCH[5]}"
             
+            echo "DEBUG: Setting MySQL connection..."
+            echo "  Host: $DB_HOST"
+            echo "  Port: $DB_PORT"
+            echo "  Database: $DB_NAME"
+            sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=mysql|g" .env
+            sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|g" .env
+            sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|g" .env
+            sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_NAME|g" .env
+            sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USER|g" .env
+            sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASS|g" .env
+        # Handle PostgreSQL URL format: postgresql://user:password@host:port/database
+        elif [[ $DATABASE_URL =~ postgresql://([^:]+):([^@]+)@([^:/?]+):?([0-9]*)/(.+) ]]; then
+            DB_USER="${BASH_REMATCH[1]}"
+            DB_PASS="${BASH_REMATCH[2]}"
+            DB_HOST="${BASH_REMATCH[3]}"
+            DB_PORT="${BASH_REMATCH[4]:-5432}"
+            DB_NAME="${BASH_REMATCH[5]}"
+            
+            echo "DEBUG: Setting PostgreSQL connection..."
+            sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=pgsql|g" .env
             sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|g" .env
             sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|g" .env
             sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_NAME|g" .env
@@ -64,11 +84,16 @@ echo "Configuring application..."
 php artisan config:clear 2>/dev/null || true
 php artisan config:cache
 
-# Kick migrations in background to avoid blocking boot
-(
-  echo "Setting up database in background...";
-  php artisan migrate --force >> storage/logs/migrate.log 2>&1 || echo "Migration warning - see storage/logs/migrate.log"
-) &
+# Final debug output before migrations
+echo "DEBUG: Final database configuration:"
+grep "^DB_CONNECTION\|^DB_HOST\|^DB_PORT\|^DB_DATABASE\|^DB_USERNAME" .env
+
+# Run migrations synchronously
+echo "Setting up database..."
+php artisan migrate --force 2>&1 || {
+    echo "⚠ Migration warning - database may already exist or has other issues"
+    echo "Attempting to continue anyway..."
+}
 
 echo "✓ Application ready!"
 PORT_ENV=${PORT:-8000}
