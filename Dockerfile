@@ -39,7 +39,7 @@ RUN npm install
 RUN npm run build
 
 # Create cache directories and permissions
-RUN mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs \
+RUN mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs bootstrap/cache \
     && chmod -R 777 storage bootstrap/cache
 
 # Run Laravel caching commands
