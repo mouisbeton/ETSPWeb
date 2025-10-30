@@ -42,16 +42,5 @@ RUN npm run build
 RUN mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs bootstrap/cache \
     && chmod -R 777 storage bootstrap/cache
 
-# Run Laravel caching commands
-RUN php artisan config:cache \
-    && php artisan route:cache
-
-# Expose a default port (Railway will pass PORT env at runtime)
-EXPOSE 8000
-
-# Health check uses runtime PORT
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD bash -lc 'curl -fsS http://127.0.0.1:${PORT:-8000}/ || exit 1'
-
 # Start application via start script (binds to $PORT)
 CMD ["bash", "start.sh"]
