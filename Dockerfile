@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     libzip-dev \
     unzip \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
@@ -21,11 +22,6 @@ RUN docker-php-ext-install \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
-
 # Set working directory
 WORKDIR /app
 
@@ -35,25 +31,25 @@ COPY . .
 # Make start script executable
 RUN chmod +x start.sh
 
-# Install PHP dependencies
+# Install dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
-
-# Install Node dependencies
 RUN npm install
-
-# Build assets
 RUN npm run build
 
-# Create cache directories
+# Create cache directories and permissions
 RUN mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs \
     && chmod -R 777 storage bootstrap/cache
 
-# Cache Laravel config (skip view:cache for now as it may fail in Docker)
+# Run Laravel caching commands
 RUN php artisan config:cache \
     && php artisan route:cache
 
 # Expose port
 EXPOSE 8000
 
-# Start PHP server with Railway PORT support
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD php -r "file_get_contents('http://localhost:8000/');" || exit 1
+
+# Start application
 CMD ["./start.sh"]
