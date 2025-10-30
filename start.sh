@@ -2,14 +2,19 @@
 set -e
 
 echo "=== Starting Task Manager on Railway ==="
+echo "DEBUG: Checking for .env.railway file..."
 
 # Copy environment file and substitute variables
 echo "Setting up environment..."
 if [ -f .env.railway ]; then
+    echo "✓ Found .env.railway - copying to .env"
     cp .env.railway .env
+    echo "DEBUG: Database credentials from .env.railway:"
+    grep "^DB_" .env || true
     
     # Parse DATABASE_URL if available (Railway provides this for MySQL)
     if [ ! -z "$DATABASE_URL" ]; then
+        echo "DEBUG: Found DATABASE_URL, parsing..."
         # DATABASE_URL format: mysql://user:password@host:port/database
         # Extract components using regex
         if [[ $DATABASE_URL =~ mysql://([^:]+):([^@]+)@([^:]+):([^/]+)/(.+)$ ]]; then
@@ -47,6 +52,12 @@ php artisan config:cache
 
 # Run migrations
 echo "Setting up database..."
+echo "DEBUG: Final DB configuration:"
+echo "DB_HOST=$(grep ^DB_HOST .env | cut -d= -f2)"
+echo "DB_PORT=$(grep ^DB_PORT .env | cut -d= -f2)"
+echo "DB_DATABASE=$(grep ^DB_DATABASE .env | cut -d= -f2)"
+echo "DB_USERNAME=$(grep ^DB_USERNAME .env | cut -d= -f2)"
+echo "DB_PASSWORD is set: $(grep ^DB_PASSWORD .env | grep -q 'DB_PASSWORD=' && echo 'YES' || echo 'NO')"
 php artisan migrate --force || echo "Migration warning - database may already exist"
 
 echo "✓ Application ready!"
