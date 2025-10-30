@@ -1,14 +1,28 @@
 #!/bin/bash
 set -e
 
-echo "=== Starting Task Manager on Railway ==="
-echo "DEBUG: Checking for .env.railway file..."
+echo "=== Starting Task Manager ==="
+
+# Detect platform (Heroku or Railway)
+if [ ! -z "$DYNO" ]; then
+    PLATFORM="HEROKU"
+    ENV_FILE=".env.heroku"
+elif [ ! -z "$RAILWAY_ENVIRONMENT_NAME" ]; then
+    PLATFORM="RAILWAY"
+    ENV_FILE=".env.railway"
+else
+    PLATFORM="LOCAL"
+    ENV_FILE=".env"
+fi
+
+echo "DEBUG: Detected platform: $PLATFORM"
+echo "DEBUG: Using environment file: $ENV_FILE"
 
 # Copy environment file and substitute variables
 echo "Setting up environment..."
-if [ -f .env.railway ]; then
-    echo "✓ Found .env.railway - copying to .env"
-    cp .env.railway .env
+if [ -f "$ENV_FILE" ]; then
+    echo "✓ Found $ENV_FILE - copying to .env"
+    cp "$ENV_FILE" .env
     echo "DEBUG: Database credentials from .env.railway:"
     grep "^DB_" .env || true
     
@@ -50,17 +64,13 @@ echo "Configuring application..."
 php artisan config:clear 2>/dev/null || true
 php artisan config:cache
 
-# Run migrations
-echo "Setting up database..."
-echo "DEBUG: Final DB configuration:"
-echo "DB_HOST=$(grep ^DB_HOST .env | cut -d= -f2)"
-echo "DB_PORT=$(grep ^DB_PORT .env | cut -d= -f2)"
-echo "DB_DATABASE=$(grep ^DB_DATABASE .env | cut -d= -f2)"
-echo "DB_USERNAME=$(grep ^DB_USERNAME .env | cut -d= -f2)"
-echo "DB_PASSWORD is set: $(grep ^DB_PASSWORD .env | grep -q 'DB_PASSWORD=' && echo 'YES' || echo 'NO')"
-php artisan migrate --force || echo "Migration warning - database may already exist"
+# Kick migrations in background to avoid blocking boot
+(
+  echo "Setting up database in background...";
+  php artisan migrate --force >> storage/logs/migrate.log 2>&1 || echo "Migration warning - see storage/logs/migrate.log"
+) &
 
 echo "✓ Application ready!"
 PORT_ENV=${PORT:-8000}
-echo "Starting PHP server on port ${PORT_ENV}..."
-exec php -S 0.0.0.0:${PORT_ENV} -t public public/index.php
+echo "Starting Laravel server on port ${PORT_ENV}..."
+exec php artisan serve --host=0.0.0.0 --port=${PORT_ENV}
