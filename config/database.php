@@ -58,9 +58,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => [
-                PDO::MYSQL_ATTR_SSL_MODE => PDO::MYSQL_SSL_MODE_DISABLED,
-            ],
+            'ssl' => false,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
         ],
 
         'mariadb' => [
@@ -78,9 +79,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => [
-                PDO::MYSQL_ATTR_SSL_MODE => PDO::MYSQL_SSL_MODE_DISABLED,
-            ],
+            'ssl' => false,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
         ],
 
         'pgsql' => [
