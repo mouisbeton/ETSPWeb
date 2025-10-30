@@ -2,6 +2,6 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "cp .env.railway .env && php artisan migrate --force && php -S 0.0.0.0:8000 -t public"
+startCommand = "bash start.sh"
 restartPolicyMaxRetries = 5
 numReplicas = 1
