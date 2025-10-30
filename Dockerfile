@@ -49,7 +49,8 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD php -r "file_get_contents('http://localhost:8000/');" || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Start application
-CMD ["./start.sh"]
+# Start application - use php -S instead of artisan serve for Docker
+ENTRYPOINT ["/bin/bash"]
+CMD ["-c", "exec php -S 0.0.0.0:${PORT:-8000} -t public"]

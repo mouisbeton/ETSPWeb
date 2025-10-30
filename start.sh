@@ -1,6 +1,12 @@
-#!/bin/sh
-set -e
+#!/bin/bash
 
+# Set default port
 PORT=${PORT:-8000}
-echo "Starting Laravel server on port $PORT..."
-php artisan serve --host=0.0.0.0 --port=$PORT
+
+# Validate port is a number
+if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
+    PORT=8000
+fi
+
+echo "Starting PHP built-in server on port $PORT..."
+exec php -S 0.0.0.0:$PORT -t public
