@@ -4,6 +4,7 @@ FROM php:8.3-fpm
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    ca-certificates \
     libpq-dev \
     libmariadb-dev \
     zlib1g-dev \
@@ -44,12 +45,12 @@ RUN mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs \
 RUN php artisan config:cache \
     && php artisan route:cache
 
-# Expose port
+# Expose a default port (Railway will pass PORT env at runtime)
 EXPOSE 8000
 
-# Health check
+# Health check uses runtime PORT
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+    CMD bash -lc 'curl -fsS http://127.0.0.1:${PORT:-8000}/ || exit 1'
 
-# Start application on port 8000
-CMD php -S 0.0.0.0:8000 -t public
+# Start application via start script (binds to $PORT)
+CMD ["bash", "start.sh"]

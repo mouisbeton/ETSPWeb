@@ -61,5 +61,6 @@ echo "DB_PASSWORD is set: $(grep ^DB_PASSWORD .env | grep -q 'DB_PASSWORD=' && e
 php artisan migrate --force || echo "Migration warning - database may already exist"
 
 echo "✓ Application ready!"
-echo "Starting PHP server on port 8000..."
-exec php -S 0.0.0.0:8000 -t public
+PORT_ENV=${PORT:-8000}
+echo "Starting PHP server on port ${PORT_ENV}..."
+exec php -S 0.0.0.0:${PORT_ENV} -t public public/index.php
