@@ -23,48 +23,30 @@ echo "Setting up environment..."
 if [ -f "$ENV_FILE" ]; then
     echo "✓ Found $ENV_FILE - copying to .env"
     cp "$ENV_FILE" .env
-    echo "DEBUG: Database credentials from .env.railway:"
+    
+    # Create storage framework directories if they don't exist
+    echo "Creating storage directories..."
+    mkdir -p storage/framework/{sessions,views,cache,testing}
+    mkdir -p storage/logs
+    mkdir -p bootstrap/cache
+    chmod -R 777 storage bootstrap/cache
+    echo "✓ Storage directories created"
+    
+    # For Railway: substitute ${VAR} style placeholders with actual environment variables
+    if [ "$PLATFORM" = "RAILWAY" ]; then
+        echo "DEBUG: Substituting Railway MySQL environment variables..."
+        
+        # Substitute database variables from Railway MySQL service
+        sed -i "s|\${RAILWAY_PRIVATE_DOMAIN}|${RAILWAY_PRIVATE_DOMAIN}|g" .env
+        sed -i "s|\${MYSQL_DATABASE}|${MYSQL_DATABASE}|g" .env
+        sed -i "s|\${MYSQLUSER}|${MYSQLUSER}|g" .env
+        sed -i "s|\${MYSQL_ROOT_PASSWORD}|${MYSQL_ROOT_PASSWORD}|g" .env
+    fi
+    
+    echo "DEBUG: Final database credentials:"
     grep "^DB_" .env || true
     
-    # Parse DATABASE_URL if available (Heroku provides PostgreSQL, Railway provides MySQL)
-    if [ ! -z "$DATABASE_URL" ]; then
-        echo "DEBUG: Found DATABASE_URL, parsing..."
-        # Handle MySQL URL format: mysql://user:password@host:port/database
-        # Also handle mysql2:// format sometimes used by Railway
-        if [[ $DATABASE_URL =~ mysql2?://([^:]+):([^@]+)@([^:/?]+):?([0-9]*)/(.+) ]]; then
-            DB_USER="${BASH_REMATCH[1]}"
-            DB_PASS="${BASH_REMATCH[2]}"
-            DB_HOST="${BASH_REMATCH[3]}"
-            DB_PORT="${BASH_REMATCH[4]:-3306}"
-            DB_NAME="${BASH_REMATCH[5]}"
-            
-            echo "DEBUG: Setting MySQL connection..."
-            echo "  Host: $DB_HOST"
-            echo "  Port: $DB_PORT"
-            echo "  Database: $DB_NAME"
-            sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=mysql|g" .env
-            sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|g" .env
-            sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|g" .env
-            sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_NAME|g" .env
-            sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USER|g" .env
-            sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASS|g" .env
-        # Handle PostgreSQL URL format: postgresql://user:password@host:port/database
-        elif [[ $DATABASE_URL =~ postgresql://([^:]+):([^@]+)@([^:/?]+):?([0-9]*)/(.+) ]]; then
-            DB_USER="${BASH_REMATCH[1]}"
-            DB_PASS="${BASH_REMATCH[2]}"
-            DB_HOST="${BASH_REMATCH[3]}"
-            DB_PORT="${BASH_REMATCH[4]:-5432}"
-            DB_NAME="${BASH_REMATCH[5]}"
-            
-            echo "DEBUG: Setting PostgreSQL connection..."
-            sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=pgsql|g" .env
-            sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|g" .env
-            sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|g" .env
-            sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_NAME|g" .env
-            sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USER|g" .env
-            sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASS|g" .env
-        fi
-    else
+else
         # Fallback: use individual environment variables if DATABASE_URL not available
         sed -i "s|\${MYSQLHOST}|${MYSQLHOST:-localhost}|g" .env
         sed -i "s|\${MYSQLPORT}|${MYSQLPORT:-3306}|g" .env
@@ -75,7 +57,7 @@ if [ -f "$ENV_FILE" ]; then
     
     echo "✓ Environment configured"
 else
-    echo "✗ .env.railway not found"
+    echo "✗ $ENV_FILE not found"
     exit 1
 fi
 
@@ -86,9 +68,9 @@ php artisan config:cache
 
 # Final debug output before migrations
 echo "DEBUG: Final database configuration:"
-grep "^DB_CONNECTION\|^DB_HOST\|^DB_PORT\|^DB_DATABASE\|^DB_USERNAME" .env
+grep "^DB_CONNECTION\|^DB_HOST\|^DB_PORT\|^DB_DATABASE\|^DB_USERNAME" .env || true
 
-# Run migrations synchronously
+# Run migrations with error handling
 echo "Setting up database..."
 php artisan migrate --force 2>&1 || {
     echo "⚠ Migration warning - database may already exist or has other issues"
@@ -97,5 +79,5 @@ php artisan migrate --force 2>&1 || {
 
 echo "✓ Application ready!"
 PORT_ENV=${PORT:-8000}
-echo "Starting Laravel server on port ${PORT_ENV}..."
-exec php artisan serve --host=0.0.0.0 --port=${PORT_ENV}
+echo "Starting PHP server on port ${PORT_ENV}..."
+exec php -S 0.0.0.0:${PORT_ENV} -t public
