@@ -32,28 +32,36 @@ if [ -f "$ENV_FILE" ]; then
     chmod -R 777 storage bootstrap/cache
     echo "✓ Storage directories created"
     
-    # For Railway: substitute ${VAR} style placeholders with actual environment variables
+    # For Railway: substitute database variables
     if [ "$PLATFORM" = "RAILWAY" ]; then
         echo "DEBUG: Substituting Railway MySQL environment variables..."
         
-        # Substitute database variables from Railway MySQL service
-        sed -i "s|\${RAILWAY_PRIVATE_DOMAIN}|${RAILWAY_PRIVATE_DOMAIN}|g" .env
-        sed -i "s|\${MYSQL_DATABASE}|${MYSQL_DATABASE}|g" .env
-        sed -i "s|\${MYSQLUSER}|${MYSQLUSER}|g" .env
-        sed -i "s|\${MYSQL_ROOT_PASSWORD}|${MYSQL_ROOT_PASSWORD}|g" .env
+        # Railway provides MYSQL_URL in format: mysql://user:password@host:port/database
+        if [ ! -z "$MYSQL_URL" ]; then
+            echo "DEBUG: Found MYSQL_URL, parsing..."
+            # Parse the URL
+            if [[ $MYSQL_URL =~ mysql://([^:]+):([^@]+)@([^:]+):([^/]+)/(.+)$ ]]; then
+                MYSQL_USER="${BASH_REMATCH[1]}"
+                MYSQL_PASS="${BASH_REMATCH[2]}"
+                MYSQL_HOST="${BASH_REMATCH[3]}"
+                MYSQL_PORT="${BASH_REMATCH[4]}"
+                MYSQL_DB="${BASH_REMATCH[5]}"
+                
+                sed -i "s|^DB_HOST=.*|DB_HOST=${MYSQL_HOST}|g" .env
+                sed -i "s|^DB_PORT=.*|DB_PORT=${MYSQL_PORT}|g" .env
+                sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${MYSQL_DB}|g" .env
+                sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${MYSQL_USER}|g" .env
+                sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${MYSQL_PASS}|g" .env
+                
+                echo "DEBUG: Parsed MySQL URL successfully"
+            fi
+        else
+            echo "DEBUG: MYSQL_URL not found, using defaults"
+        fi
     fi
     
     echo "DEBUG: Final database credentials:"
     grep "^DB_" .env || true
-    
-else
-        # Fallback: use individual environment variables if DATABASE_URL not available
-        sed -i "s|\${MYSQLHOST}|${MYSQLHOST:-localhost}|g" .env
-        sed -i "s|\${MYSQLPORT}|${MYSQLPORT:-3306}|g" .env
-        sed -i "s|\${MYSQLDATABASE}|${MYSQLDATABASE:-laravel}|g" .env
-        sed -i "s|\${MYSQLUSER}|${MYSQLUSER:-root}|g" .env
-        sed -i "s|\${MYSQLPASSWORD}|${MYSQLPASSWORD:-}|g" .env
-    fi
     
     echo "✓ Environment configured"
 else
