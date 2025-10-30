@@ -8,12 +8,12 @@ echo "Setting up environment..."
 if [ -f .env.railway ]; then
     cp .env.railway .env
     
-    # Substitute environment variables
-    sed -i "s|\${DATABASE_HOST}|${DATABASE_HOST}|g" .env
-    sed -i "s|\${DATABASE_PORT}|${DATABASE_PORT}|g" .env
-    sed -i "s|\${DATABASE_NAME}|${DATABASE_NAME}|g" .env
-    sed -i "s|\${DATABASE_USER}|${DATABASE_USER}|g" .env
-    sed -i "s|\${DATABASE_PASSWORD}|${DATABASE_PASSWORD}|g" .env
+    # Substitute Railway MySQL environment variables
+    sed -i "s|\${MYSQLHOST}|${MYSQLHOST}|g" .env
+    sed -i "s|\${MYSQLPORT}|${MYSQLPORT}|g" .env
+    sed -i "s|\${MYSQLDATABASE}|${MYSQLDATABASE}|g" .env
+    sed -i "s|\${MYSQLUSER}|${MYSQLUSER}|g" .env
+    sed -i "s|\${MYSQLPASSWORD}|${MYSQLPASSWORD}|g" .env
     
     echo "✓ Environment configured"
 else
