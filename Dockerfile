@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     npm \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions

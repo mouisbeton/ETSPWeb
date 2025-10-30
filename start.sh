@@ -36,28 +36,33 @@ if [ -f "$ENV_FILE" ]; then
     if [ "$PLATFORM" = "RAILWAY" ]; then
         echo "DEBUG: Substituting Railway MySQL environment variables..."
         
-        # Railway provides MYSQL_URL in format: mysql://user:password@host:port/database
-        if [ ! -z "$MYSQL_URL" ]; then
-            echo "DEBUG: Found MYSQL_URL, parsing..."
-            # Parse the URL
-            if [[ $MYSQL_URL =~ mysql://([^:]+):([^@]+)@([^:]+):([^/]+)/(.+)$ ]]; then
-                MYSQL_USER="${BASH_REMATCH[1]}"
-                MYSQL_PASS="${BASH_REMATCH[2]}"
-                MYSQL_HOST="${BASH_REMATCH[3]}"
-                MYSQL_PORT="${BASH_REMATCH[4]}"
-                MYSQL_DB="${BASH_REMATCH[5]}"
-                
-                sed -i "s|^DB_HOST=.*|DB_HOST=${MYSQL_HOST}|g" .env
-                sed -i "s|^DB_PORT=.*|DB_PORT=${MYSQL_PORT}|g" .env
-                sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${MYSQL_DB}|g" .env
-                sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${MYSQL_USER}|g" .env
-                sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${MYSQL_PASS}|g" .env
-                
-                echo "DEBUG: Parsed MySQL URL successfully"
-            fi
-        else
-            echo "DEBUG: MYSQL_URL not found, using defaults"
+        # Railway provides individual env vars - replace placeholders
+        if [ ! -z "$MYSQL_HOST" ]; then
+            sed -i "s|MYSQL_HOST_PLACEHOLDER|${MYSQL_HOST}|g" .env
+            echo "DEBUG: Set DB_HOST=${MYSQL_HOST}"
         fi
+        
+        if [ ! -z "$MYSQL_PORT" ]; then
+            sed -i "s|MYSQL_PORT_PLACEHOLDER|${MYSQL_PORT}|g" .env
+            echo "DEBUG: Set DB_PORT=${MYSQL_PORT}"
+        fi
+        
+        if [ ! -z "$MYSQL_DATABASE" ]; then
+            sed -i "s|MYSQL_DATABASE_PLACEHOLDER|${MYSQL_DATABASE}|g" .env
+            echo "DEBUG: Set DB_DATABASE=${MYSQL_DATABASE}"
+        fi
+        
+        if [ ! -z "$MYSQL_USERNAME" ]; then
+            sed -i "s|MYSQL_USERNAME_PLACEHOLDER|${MYSQL_USERNAME}|g" .env
+            echo "DEBUG: Set DB_USERNAME=${MYSQL_USERNAME}"
+        fi
+        
+        if [ ! -z "$MYSQL_PASSWORD" ]; then
+            sed -i "s|MYSQL_PASSWORD_PLACEHOLDER|${MYSQL_PASSWORD}|g" .env
+            echo "DEBUG: Set DB_PASSWORD=***"
+        fi
+        
+        echo "DEBUG: Placeholder substitution complete"
     fi
     
     echo "DEBUG: Final database credentials:"
